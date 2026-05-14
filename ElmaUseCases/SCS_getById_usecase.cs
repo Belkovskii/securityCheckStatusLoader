@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SecurityCheckStatusLoader
+namespace SecurityCheckStatusLoader.ElmaUseCases
 {
     public static class SCS_getById_usecase
     {

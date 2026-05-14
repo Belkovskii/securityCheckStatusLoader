@@ -8,14 +8,15 @@ using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
 using System.Text;
 using Newtonsoft.Json;
+using SecurityCheckStatusLoader.ElmaUseCases;
+using System.Net.Mail;
 
 //LOGIN
 //Console.WriteLine("Логин и авторизация в системе...");
 bool isProd = false;
-//string username = isProd ? "elmaadm@corphn.com" : "denis.belkovsky@masterdata.ru";
-//string userPassword = isProd ? "HjvKphIV_O" : "Asz79!#58";
-//string host = isProd ? "http://elmadev.neadru.local/" : "https://l42bom5pymlbs.elma365.ru/";
-string host = "https://l42bom5pymlbs.elma365.ru/pub/v1";
+string username = isProd ? "elmaadm@corphn.com" : "denis.belkovsky@masterdata.ru";
+string userPassword = isProd ? "HjvKphIV_O" : "Asz79!#58";
+string host = isProd ? "http://elmadev.neadru.local/" : "https://l42bom5pymlbs.elma365.ru/";
 string bearerToken = "bcf83280-631c-4ce6-8bf2-70cd49d79faa";
 
 using HttpClientHandler httpClientHandler = new()
@@ -29,33 +30,27 @@ client.DefaultRequestHeaders.Accept.Add(
     new MediaTypeWithQualityHeaderValue("application/json")
 );
 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-
-
-string responseContent = await SCS_getById_usecase.SCS_getByIdAsync(new Guid("019da41d-62a7-780d-8dc1-4e0f4c3e0ae7"), client);
-Console.WriteLine(responseContent);
-
-
-//LoginClient loginClient = new(host, client);
-//var token = loginClient.LoginAndGetToken(username, userPassword);
-//if (token == null || token.Length < 5)
-//{
-//    Console.WriteLine("Не удалось получить токен");
-//    Console.ReadKey();
-//    throw new Exception("Did not get token");
-//}
+LoginClient loginClient = new(host, client);
+var token = loginClient.LoginAndGetToken(username, userPassword);
+if (token == null || token.Length < 5)
+{
+    Console.WriteLine("Не удалось получить токен");
+    Console.ReadKey();
+    throw new Exception("Did not get token");
+}
 
 //AUTH
-//AuthClient authClient = new(token, host);
-//var authStatusCode = await authClient.Auth();
-//if (authStatusCode.Trim().Equals("OK", StringComparison.CurrentCultureIgnoreCase))
-//{
-//    Console.WriteLine("Логин и авторизация прошли успешно");
-//}
-//else
-//{
-//    Console.WriteLine("Произошла ошибка аутентификации");
-//}
-//Console.WriteLine();
+AuthClient authClient = new(token, host);
+var authStatusCode = await authClient.Auth();
+if (authStatusCode.Trim().Equals("OK", StringComparison.CurrentCultureIgnoreCase))
+{
+    Console.WriteLine("Логин и авторизация прошли успешно");
+}
+else
+{
+    Console.WriteLine("Произошла ошибка аутентификации");
+}
+Console.WriteLine();
 
 //PARSE EXCEL
 //string CONTENT_DOCUMENT = "ФайлыСGUIDКонтрагентов.xlsx";
@@ -74,6 +69,62 @@ Console.WriteLine(responseContent);
 
 
 
+
+
+//var filePath = currentDirectory + $"/Тестовые файлы проверок/{fileName}";
+var fileName = "testFile.txt";
+string baseDirectory = AppContext.BaseDirectory;
+string filePath = Path.Combine(baseDirectory, "Тестовые файлы проверок", "testFile.txt");
+Console.WriteLine($"filePath: {filePath}");
+byte[] fileBytes = File.ReadAllBytes(filePath);
+FileUploadManager fileUploadManager = new(client, token, host);
+string extension = Path.GetExtension(fileName)?.TrimStart('.') ?? "";
+var (fileRecord, fileUploadError) = await fileUploadManager.UploadFile(fileBytes, fileName);
+if (fileRecord != null && (fileUploadError == null || String.IsNullOrEmpty(fileUploadError)))
+{
+    //Console.WriteLine($"fileRecord.__id: {fileRecord");
+    await SCS_create_usecase.Create(
+            client,
+            host,
+            "019d1dd7-76ca-727c-acf2-7fac5cf113b4" /*H&N test*/,
+            "019cbf55-13bc-7238-af3d-9e1d1251deb3" /*низкий уровень риска*/,
+            fileRecord,
+            new DateTime(2026, 3, 8)
+     );
+} 
+else
+{
+    Console.WriteLine(fileUploadError);
+    Console.WriteLine("file not loaded");
+}
+
+
+
+
+
+/*
+ CORRECT:
+
+{
+  "context": {
+    "__directory": "00000000-0000-0000-0000-000000000000",
+    "__externalId": "example",
+    "CRMClienId": [
+      "019e1d6e-2e71-706d-80e5-fe9ff0b1e85b"
+    ],
+    "StatusId": [
+      "019cbf55-2d97-75fa-8f90-5a2654fd1d13"
+    ],
+    "CheckAttachment": ["e4d7b3a9-3045-4b26-b5a1-52a6297c09c2"],
+    "CheckDate": "2026-05-14T13:01:54.088Z"
+  },
+  "statusGroupId": "a35cd8de-0c73-4f6a-8218-90193d02e2e0",
+  "withEventForceCreate": true
+}
+ 
+ 
+ 
+ */
 
 
 /*
