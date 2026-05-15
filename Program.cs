@@ -142,8 +142,6 @@ Parallel.ForEach(contractorFolders, async contractorFolder =>
     
 
     string[] subfoldersNames = Directory.GetDirectories(contractorFolder);
-
-
     Parallel.ForEach(subfoldersNames, async subfolderName =>
     {
         if (!Guid.TryParse(Path.GetFileName(subfolderName), out Guid recordId))

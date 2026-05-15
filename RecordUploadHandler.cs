@@ -14,7 +14,10 @@ namespace SecurityCheckStatusLoader
 
 
         async public static void ProceesRecord(
-            CounterpartyFromFilesFolder record,
+            Guid contractorExternalId,
+            Guid scsExternalId,
+            byte[] fileBody,
+            string fileName,
             Dictionary<Guid, XlsxRecord> xlsxRecordsMap,
             SemaphoreSlim apiLock,
             HttpClient httpClient,
@@ -25,52 +28,37 @@ namespace SecurityCheckStatusLoader
             await apiLock.WaitAsync();
             try
             {
-                var contractorExternalId = record.ExternalId;
-                var contractorResult = await Contractor_getByExternalId_usecase.Contractor_getByExternalId(
-                    contractorExternalId.ToString(),
-                    host,
-                    httpClient
-                );
-                Boolean doesCounterpartyExist = contractorResult.Contains("\"success\":true") &&
-                    contractorResult.Contains("__id");
-                if (doesCounterpartyExist && record.SecurityRecords != null)
+                XlsxRecord xlsxRecord = xlsxRecordsMap[scsExternalId];
+                string scsRecord = await SCS_getByExternalId_usecase.SCS_getByExternalId(
+                    scsExternalId.ToString(), host, httpClient
+                );                
+                bool doNeedToCreate = scsRecord.Contains("\"success\":true") && scsRecord.Contains("__id");
+                FileUploadManager fileUploadManager = new(httpClient, token, host);                
+                var (fileRecord, fileUploadError) = await fileUploadManager.UploadFile(fileBody, fileName);
+                if (fileRecord != null)
                 {
-                    foreach (var securityRecordFromFile in record.SecurityRecords)
+                    FileAttachment fileAttachment = new(fileRecord);
+                    ScsUpdateCreateData data = new()
                     {
-                        Boolean doCreate = false;
-                        string scsRecord = await SCS_getByExternalId_usecase.SCS_getByExternalId(
-                            $"securityRecordFromFile.Id", host, httpClient);
+                        CheckAttachment = fileRecord,
+                        SecurityCheckGUID = xlsxRecord.Guid.ToString()                                              
+                    };
+                    if (xlsxRecord.CreatedAt != null) data.CheckDate = xlsxRecord.CreatedAt.Value;
 
-                        if (!scsRecord.Contains("\"success\":true") && !(scsRecord.Contains("__id")))
-                        {
-                            doCreate = true;
-                        }
-                        var xlsxRecord = xlsxRecordsMap[securityRecordFromFile.Id];
+                    if (doNeedToCreate)
+                    {
 
-                        //LOAD FILE
-                        string baseDirectory = AppContext.BaseDirectory;
-                        string filePath = Path.Combine(baseDirectory, "Тестовые файлы проверок", "testFile.txt");
-                        
-
-                        // CREATE OR UPDATE RECORD
-                        if (doCreate)
-                        {
-
-                        }
-
-                        fillSecurityRecordDataFromExcel(securityRecord, xlsxRecord);
-                        var fileId = uploadFile(securityRecordFromFile);
-                        securityRecord.FileId = fileId;
-                        if (doCreate)
-                        {
-                            createRecord(securityRecord);
-                        }
-                        else
-                        {
-                            updateRecord(securityRecord);
-                        }
+                    }
+                    else
+                    {
+                       
                     }
                 }
+                else
+                {
+                    //File upload error;
+                }
+                                
             }
             catch (Exception ex)
             {
