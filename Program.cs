@@ -69,34 +69,37 @@ Console.WriteLine();
 
 
 
-
+var result = await Contractor_getByExternalId_usecase.Contractor_getByExternalId(
+    "623063ea-71f7-11f0-a359-005056ae7f7f", host, client
+);
+Console.WriteLine(result);
 
 //var filePath = currentDirectory + $"/Тестовые файлы проверок/{fileName}";
-var fileName = "testFile.txt";
-string baseDirectory = AppContext.BaseDirectory;
-string filePath = Path.Combine(baseDirectory, "Тестовые файлы проверок", "testFile.txt");
-Console.WriteLine($"filePath: {filePath}");
-byte[] fileBytes = File.ReadAllBytes(filePath);
-FileUploadManager fileUploadManager = new(client, token, host);
-string extension = Path.GetExtension(fileName)?.TrimStart('.') ?? "";
-var (fileRecord, fileUploadError) = await fileUploadManager.UploadFile(fileBytes, fileName);
-if (fileRecord != null && (fileUploadError == null || String.IsNullOrEmpty(fileUploadError)))
-{
-    //Console.WriteLine($"fileRecord.__id: {fileRecord");
-    await SCS_create_usecase.Create(
-            client,
-            host,
-            "019d1dd7-76ca-727c-acf2-7fac5cf113b4" /*H&N test*/,
-            "019cbf55-13bc-7238-af3d-9e1d1251deb3" /*низкий уровень риска*/,
-            fileRecord,
-            new DateTime(2026, 3, 8)
-     );
-} 
-else
-{
-    Console.WriteLine(fileUploadError);
-    Console.WriteLine("file not loaded");
-}
+//var fileName = "testFile.txt";
+//string baseDirectory = AppContext.BaseDirectory;
+//string filePath = Path.Combine(baseDirectory, "Тестовые файлы проверок", "testFile.txt");
+//Console.WriteLine($"filePath: {filePath}");
+//byte[] fileBytes = File.ReadAllBytes(filePath);
+//FileUploadManager fileUploadManager = new(client, token, host);
+//string extension = Path.GetExtension(fileName)?.TrimStart('.') ?? "";
+//var (fileRecord, fileUploadError) = await fileUploadManager.UploadFile(fileBytes, fileName);
+//if (fileRecord != null && (fileUploadError == null || String.IsNullOrEmpty(fileUploadError)))
+//{
+//    //Console.WriteLine($"fileRecord.__id: {fileRecord");
+//    await SCS_create_usecase.Create(
+//            client,
+//            host,
+//            "019d1dd7-76ca-727c-acf2-7fac5cf113b4" /*H&N test*/,
+//            "019cbf55-13bc-7238-af3d-9e1d1251deb3" /*низкий уровень риска*/,
+//            fileRecord,
+//            new DateTime(2026, 3, 8)
+//     );
+//} 
+//else
+//{
+//    Console.WriteLine(fileUploadError);
+//    Console.WriteLine("file not loaded");
+//}
 
 
 
