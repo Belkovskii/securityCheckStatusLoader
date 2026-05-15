@@ -27,6 +27,7 @@ namespace SecurityCheckStatusLoader
         {
             using var request = new HttpRequestMessage(Method, Endpoint);
             StringContent? contentBody = null;
+            Console.WriteLine(PayloadJSON);
             if (PayloadJSON != null)
             {
                 contentBody = new StringContent(PayloadJSON, Encoding.UTF8, "application/json");
@@ -45,6 +46,7 @@ namespace SecurityCheckStatusLoader
             }
             var response = HttpClient.SendAsync(request).Result;
             statusCode = response.StatusCode;
+            Console.WriteLine(statusCode);
             string responseContent = response.Content.ReadAsStringAsync().Result;
             return responseContent;
         }

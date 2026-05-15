@@ -1,15 +1,7 @@
 ﻿
 using SecurityCheckStatusLoader;
-using System;
-using System.Collections.Concurrent;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json.Nodes;
-using System.Text;
-using Newtonsoft.Json;
 using SecurityCheckStatusLoader.ElmaUseCases;
-using System.Net.Mail;
+using System.Net.Http.Headers;
 
 //LOGIN
 //Console.WriteLine("Логин и авторизация в системе...");
@@ -66,13 +58,24 @@ Console.WriteLine();
 //var xlsxRecords = XlsxParser.Parse(excelFilePath);
 //Console.WriteLine($"Данные из xlsx-файла собраны, количество записей: {xlsxRecords.Count}");
 
+//ScsUpdateCreateData data = new();
+//data.RecordId = "019e2813-0f04-7cef-8bcd-26eccd1d3d5c";
+//data.SecurotyUserId = "a9f37bb1-8f2a-4ecf-97b1-8679c8e0c8b8";
+//data.CheckDate = new DateTime(2027, 1, 1);
+//var response = await SCS_update_usecase.Update(client, host, data);
+//Console.WriteLine(response.ToString());
 
 
 
-var result = await Contractor_getByExternalId_usecase.Contractor_getByExternalId(
-    "623063ea-71f7-11f0-a359-005056ae7f7f", host, client
-);
-Console.WriteLine(result);
+//var result = await Contractor_getByExternalId_usecase.Contractor_getByExternalId(
+//    "623063ea-71f7-11f0-a359-005056ae7f7f", host, client
+//);
+//Console.WriteLine(result.Contains("\"success\":true") && result.Contains("__id"));
+
+//var user = User_getByName_usecase.User_getByName("GARAEVA", "Asiya", host, client, token);
+//Console.WriteLine(user);
+
+
 
 //var filePath = currentDirectory + $"/Тестовые файлы проверок/{fileName}";
 //var fileName = "testFile.txt";
@@ -164,7 +167,14 @@ Parallel.ForEach(counterpartyFolders, counterpartyFolder =>
         byte[] fileBytes = File.ReadAllBytes(filePath);
         var record = new SecurityRecordFromFilesFolder{ Id = recordId, FileItem = fileBytes};
         records.Add(record);
+// 1. Объявляем семафор (лучше делать статическим, если метод статический)
+private static readonly SemaphoreSlim _apiLock = new SemaphoreSlim(1, 1);
 
+// ...
+
+// 2. Внутри вашего метода
+// Ждем освобождения семафора асинхронно
+await _apiLock.WaitAsync();
         // Загрузка файла в БД через API (эмулируем)
         //UploadFileToDatabase(record);
     });

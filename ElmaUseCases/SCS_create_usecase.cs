@@ -13,10 +13,7 @@ namespace SecurityCheckStatusLoader.ElmaUseCases
         async public static Task<string> Create(
             HttpClient httpClient,
             string host,
-            string crmClientId,
-            string statusId, 
-            FileCreationModel fileCreationModel,
-            DateTime checkDate
+            ScsUpdateCreateData data
         )
         {
             var url = $"{host}pub/v1/app/_clients/SecurityCheckStatus/create";                                                        
@@ -26,10 +23,10 @@ namespace SecurityCheckStatusLoader.ElmaUseCases
                 context = new ContextObject
                 {
                     __directory = "00000000-0000-0000-0000-000000000000",                    
-                    CRMClienId = [crmClientId],
-                    StatusId = [statusId],
-                    CheckDateString = checkDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                    CheckAttachmentList = [ new FileAttachment(fileCreationModel) ]
+                    CRMClienId = [data.CRMClienId],
+                   // StatusId = [data.],
+                    CheckDateString = data.CheckDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                    CheckAttachmentList = [ new FileAttachment(data.CheckAttachment) ]
                 }
             };
             var jsonSerializerSettings = new JsonSerializerSettings
