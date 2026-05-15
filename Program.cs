@@ -138,10 +138,9 @@ Parallel.ForEach(contractorFolders, async contractorFolder =>
     {
         semaphoreSlim.Release();
     }
-    if (!isContractorInSystem)
-    {
-        return;
-    }
+    if (!isContractorInSystem) return;
+    
+
     string[] subfoldersNames = Directory.GetDirectories(contractorFolder);
 
 
