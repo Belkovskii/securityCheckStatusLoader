@@ -1,6 +1,7 @@
 ﻿
 using SecurityCheckStatusLoader;
 using SecurityCheckStatusLoader.ElmaUseCases;
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 
 //LOGIN
@@ -106,87 +107,62 @@ Console.WriteLine($"Данные из xlsx-файла собраны, колич
 
 
 
-
-
-
-
-
 //PROCEED FILES IN PARALLEL
 var filesParentFolder = "Files";
 var filesPath = currentDirectory + $"/{filesParentFolder}";
-var counterpartyFolders = Directory.GetDirectories(filesPath);
-var apiLock = new object();
+var contractorFolders = Directory.GetDirectories(filesPath);
 // Параллельная обработка контрагентов
-Parallel.ForEach(counterpartyFolders, counterpartyFolder =>
+Parallel.ForEach(contractorFolders, async contractorFolder =>
 {
-    if (!Guid.TryParse(Path.GetFileName(counterpartyFolder), out Guid externalId))
+    if (!Guid.TryParse(Path.GetFileName(contractorFolder), out Guid externalId))
     {
-        Console.WriteLine($"Пропуск папки с некорректным именем: {counterpartyFolder}");
+        Console.WriteLine($"Пропуск папки с некорректным именем: {contractorFolder}");
         return;
     }
-    var counterparty = new CounterpartyFromFilesFolder{ ExternalId = externalId };
-    var securityRecordFolders = Directory.GetDirectories(counterpartyFolder);
-    var records = new ConcurrentBag<SecurityRecordFromFilesFolder>();
-    Parallel.ForEach(securityRecordFolders, recordFolder =>
+    string contractorId = externalId.ToString();
+
+    //Проверяем, есть ли контрагент в системе
+    bool isContractorInSystem = false;
+    SemaphoreSlim semaphoreSlim = new(1, 1);
+    await semaphoreSlim.WaitAsync();
+    try
     {
-        if (!Guid.TryParse(Path.GetFileName(recordFolder), out Guid recordId))
+        string response = await Contractor_getByExternalId_usecase.Contractor_getByExternalId(contractorId, host, client);
+        isContractorInSystem = response.Contains("\"success\":true") && response.Contains("__id");
+    }
+    catch
+    {
+        Console.WriteLine("Error fetching contractor");
+    }
+    finally
+    {
+        semaphoreSlim.Release();
+    }
+    if (!isContractorInSystem)
+    {
+        return;
+    }
+    string[] subfoldersNames = Directory.GetDirectories(contractorFolder);
+
+
+    Parallel.ForEach(subfoldersNames, async subfolderName =>
+    {
+        if (!Guid.TryParse(Path.GetFileName(subfolderName), out Guid recordId))
         {
-            Console.WriteLine($"Пропуск папки записи с некорректным именем: {recordFolder}");
+            Console.WriteLine($"Пропуск папки записи с некорректным именем: {subfolderName}");
             return;
         }
-        var files = Directory.GetFiles(recordFolder);
+        var files = Directory.GetFiles(subfolderName);
         if (files.Length == 0)
         {
-            Console.WriteLine($"В папке {recordFolder} нет файлов.");
+            Console.WriteLine($"В папке {subfolderName} нет файлов.");
             return;
         }
         string filePath = files[0];
         byte[] fileBytes = File.ReadAllBytes(filePath);
-        var record = new SecurityRecordFromFilesFolder{ Id = recordId, FileItem = fileBytes};
-        records.Add(record);
-// 1. Объявляем семафор (лучше делать статическим, если метод статический)
-private static readonly SemaphoreSlim _apiLock = new SemaphoreSlim(1, 1);
-
-// ...
-
-// 2. Внутри вашего метода
-// Ждем освобождения семафора асинхронно
-await _apiLock.WaitAsync();
-        // Загрузка файла в БД через API (эмулируем)
-        //UploadFileToDatabase(record);
+        //RecordUploadHandler.
     });
 });
-*/
+    
 
-//var createPayload = new SecurityCheckStatusCreatePayload
-//{
-//    Payload = new CreatePayload(),
-//    TempData = new TempData()
-//};
-//createPayload.Payload.CheckDate = new DateTime(2026, 8, 19, 0, 0, 0, DateTimeKind.Utc);
-//createPayload.Payload.Name = "Test from loader app";
-//createPayload.TempData.WithEventForceCreate = false;
-//createPayload.TempData.AssignExistingIndex = false;
-//createPayload.Payload.CRMClienId = [Guid.Parse("019e1d6e-2e71-706c-9c66-060a956ba4f1")];
-//createPayload.Payload.StatusId = [Guid.Parse("019cbf55-6218-7199-a489-629a01644119")];
-
-//string jsonStringResult;
-
-////try
-//{
-//    jsonStringResult = PayloadSerializer.SerializeToJson(createPayload);
-//    Console.WriteLine(jsonStringResult);
-//    Console.WriteLine("\n--- Сериализация завершена успешно ---");
-
-
-//    var createEndpoint = "https://l42bom5pymlbs.elma365.ru/api/apps/_clients/SecurityCheckStatus/items";
-//    var method = HttpMethod.Post;
-//    var calloutManager = new CalloutManager(client, createEndpoint, jsonStringResult, token, method);
-//    var result = calloutManager.SendRequest(out HttpStatusCode statusCode);
-//    Console.WriteLine($"creation statusCode: {statusCode}");
-//}
-//catch (Exception ex)
-//{
-//    Console.WriteLine($"Произошла ошибка при сериализации: {ex.Message}");
-//    return;
-//}
+        
