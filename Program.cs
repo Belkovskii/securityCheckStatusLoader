@@ -45,18 +45,18 @@ else
 Console.WriteLine();
 
 //PARSE EXCEL
-//string CONTENT_DOCUMENT = "ФайлыСGUIDКонтрагентов.xlsx";
-//string currentDirectory = Directory.GetCurrentDirectory();
-//var excelFilePath = currentDirectory + $"/{CONTENT_DOCUMENT}";
-//if (!File.Exists(excelFilePath))
-//{
-//    Console.WriteLine($"Файл {CONTENT_DOCUMENT} не был найден по пути {excelFilePath}, нажмите любую клавишу для выхода");
-//    Console.ReadKey();
-//    throw new FileNotFoundException($"Файл {CONTENT_DOCUMENT} не был найден");
-//}
-//Console.WriteLine($"Парсим {CONTENT_DOCUMENT}...");
-//var xlsxRecords = XlsxParser.Parse(excelFilePath);
-//Console.WriteLine($"Данные из xlsx-файла собраны, количество записей: {xlsxRecords.Count}");
+string CONTENT_DOCUMENT = "ФайлыСGUIDКонтрагентов.xlsx";
+string currentDirectory = Directory.GetCurrentDirectory();
+var excelFilePath = currentDirectory + $"/{CONTENT_DOCUMENT}";
+if (!File.Exists(excelFilePath))
+{
+    Console.WriteLine($"Файл {CONTENT_DOCUMENT} не был найден по пути {excelFilePath}, нажмите любую клавишу для выхода");
+    Console.ReadKey();
+    throw new FileNotFoundException($"Файл {CONTENT_DOCUMENT} не был найден");
+}
+Console.WriteLine($"Парсим {CONTENT_DOCUMENT}...");
+var xlsxRecords = XlsxParser.Parse(excelFilePath);
+Console.WriteLine($"Данные из xlsx-файла собраны, количество записей: {xlsxRecords.Count}");
 
 //ScsUpdateCreateData data = new();
 //data.RecordId = "019e2813-0f04-7cef-8bcd-26eccd1d3d5c";
@@ -108,34 +108,11 @@ Console.WriteLine();
 
 
 
-/*
- CORRECT:
-
-{
-  "context": {
-    "__directory": "00000000-0000-0000-0000-000000000000",
-    "__externalId": "example",
-    "CRMClienId": [
-      "019e1d6e-2e71-706d-80e5-fe9ff0b1e85b"
-    ],
-    "StatusId": [
-      "019cbf55-2d97-75fa-8f90-5a2654fd1d13"
-    ],
-    "CheckAttachment": ["e4d7b3a9-3045-4b26-b5a1-52a6297c09c2"],
-    "CheckDate": "2026-05-14T13:01:54.088Z"
-  },
-  "statusGroupId": "a35cd8de-0c73-4f6a-8218-90193d02e2e0",
-  "withEventForceCreate": true
-}
- 
- 
- 
- */
 
 
-/*
+
 //PROCEED FILES IN PARALLEL
-var filesParentFolder = isProd ? "" : "Тестовые файлы проверок";
+var filesParentFolder = "Files";
 var filesPath = currentDirectory + $"/{filesParentFolder}";
 var counterpartyFolders = Directory.GetDirectories(filesPath);
 var apiLock = new object();

@@ -47,7 +47,6 @@ namespace SecurityCheckStatusLoader.ElmaUseCases
                 return "no value";
             }
         }
-
     }
 
     public class SecurityCheckPayload
